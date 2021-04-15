@@ -18,6 +18,13 @@
 "
 $Author = "Author: https://www.linkedin.com/in/bogdan-ciocotisan-90b45367/"
 
+$path = "C:\ADtool\"
+If(!(test-path $path))
+{
+      Write-Host "The folder $path was created !!!" -ForegroundColor green
+      New-Item -ItemType Directory -Force -Path $path | Out-Null
+}
+
 do {
 Write-Host "$Welcome" -ForegroundColor red
 Write-Host "$Author" -ForegroundColor green
@@ -25,24 +32,24 @@ Write-Host "`n$line"
 Write-Host "================ Menu ================"
   [int]$userMenuChoice = 0
   while ( $userMenuChoice -lt 1 -or $userMenuChoice -gt 4) {
-    Write-Host "1. Network configuration"
-    Write-Host "2. Hostname of Server"
-    Write-Host "3. Domain"
-    Write-Host "4. Computers olders than 90 Days"
+    Write-Host "1. IP network configuration"
+    Write-Host "2. Server' hostname"
+    Write-Host "3. Display the Domain Name"
+    Write-Host "4. Last AD communication with old computers"
     Write-Host "5. Export all AD groups and thier members"
     Write-Host "6. Create AD user"
     Write-Host "7. List inactive users from 30 days"
     Write-Host "8. List inactive computers from 30 days"
-    Write-Host "9. List users of a specific AD Group"
-    Write-Host "10. Export users of a specific AD Group"
+    Write-Host "9. List users from a specific AD Group"
+    Write-Host "10. Export users from a specific AD Group"
     Write-Host "11. Add user to a specific AD Group"
-    Write-Host "12. Add Bulk users creating from .csv"
+    Write-Host "12. Import Bulk users in AD from .csv file"
     Write-Host "13. Delete AD user"
     Write-Host "14. Disable AD user"
     Write-Host "15. Enable AD user"
     Write-Host "16. Reset AD user password"
     Write-Host "17. Test AD user password"
-    Write-Host "18. Rename AD Object, CN-Canonical Name"
+    Write-Host "18. Rename AD User CN Object, (CN=Canonical Name)"
     Write-Host "19. List all AD User proprietes"
     Write-Host "20. Check FSMO Roles"
     Write-Host "21. AD Replication status /showrepl"
@@ -61,6 +68,9 @@ Write-Host "================ Menu ================"
     Write-Host "34. Backing Up AD locally"
     Write-Host "35. Map a network share folder"
     Write-Host "36. Backing Up AD to Network Path"
+    Write-Host "37. Copy All users from an group to another"
+    Write-Host "38. Lista all users from an OU"
+    Write-Host "39. Move all users from an OU to another"
      
     Write-Host "Q. Quit and Exit"
     Write-Host "`n$line"
@@ -68,66 +78,76 @@ Write-Host "================ Menu ================"
     [int]$userMenuChoice = Read-Host "Please choose an option"
 
     switch ($userMenuChoice) {
+
       1{ipconfig;
-	  Write-Host "Success !!!" -ForegroundColor green
-      Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+	        Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
       
       2{hostname; 
-	  Write-Host "Success !!!" -ForegroundColor green
-      Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+	        Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
       
       3{Get-ADDomain;
-	  Write-Host "Success !!!" -ForegroundColor green
-      Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+	        Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
 
-      4{
-        # Gets time stamps for all computers in the domain that have NOT logged in since after specified date 
-        # Mod by Tilo 2013-08-27 
-		$DateTime = Get-Date -f "yyyy-MM"
-        import-module activedirectory  
+      4{$DateTime = Get-Date -f "yyyy-MM"
+        import-module activedirectory 
+        $path4 = "C:\ADtool\Old_Computers\"
+            If(!(test-path $path4))
+                {
+                    New-Item -ItemType Directory -Force -Path $path4 | Out-Null
+                } 
         $domain = Get-ADDomainController -filter * | select domain
-  
-        $DaysInactive = 90  
+        $DaysInactive = Read-Host -Prompt 'Enter the number of days passed since the last communication' 
         $time = (Get-Date).Adddays(-($DaysInactive)) 
   
         # Get all AD computers with lastLogonTimestamp less than our time 
         Get-ADComputer -Filter {LastLogonTimeStamp -lt $time} -Properties LastLogonTimeStamp | 
   
         # Output hostname and lastLogonTimestamp into CSV 
-        select-object Name,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp)}} | export-csv c:\OLD_Computer"+$DateTime+".csv -notypeinformation 
-        Write-Host "Success !!!" -ForegroundColor green
-		Write-Host "The list was exported on c:\OLD_Computer"+$DateTime+".csv"
-		Read-Host -Prompt “Press Enter to exit”}
+        select-object Name,@{Name="Stamp"; Expression={[DateTime]::FromFileTime($_.lastLogonTimestamp)}} | export-csv C:\ADtool\Old_Computers\Old_Computers"+$DateTime+".csv -notypeinformation 
+            Write-Host "`n$line"
+            Write-Host "Success !!!" -ForegroundColor green
+		    Write-Host "The list was exported on " –NoNewline
+            Write-Host "C:\ADtool\Old_Computer\Old_Computers"+$DateTime+".csv" -ForegroundColor red
+            Write-Host "`n$line"
+		Read-Host -Prompt “Press Enter to return to main menu”}
        
-       5{
-        #// Start of script 
-        #// Get year and month for csv export file 
-        $DateTime = Get-Date -f "yyyy-MM" 
+     5{$DateTime = Get-Date -f "yyyy-MM" 
+       $path5 = "C:\ADtool\AD_groups_members\"
+            If(!(test-path $path5))
+                {
+                    New-Item -ItemType Directory -Force -Path $path5 | Out-Null
+                } 
+       $CSVFile = "C:\ADtool\AD_groups_members\All_AD_groups_and_members"+$DateTime+".csv" 
  
-        #// Set CSV file name 
-        $CSVFile = "C:\AD_Groups"+$DateTime+".csv" 
+       $CSVOutput = @() 
  
-        #// Create emy array for CSV data 
-        $CSVOutput = @() 
+       #// Get all AD groups in the domain 
+       $ADGroups = Get-ADGroup -Filter * 
  
-        #// Get all AD groups in the domain 
-        $ADGroups = Get-ADGroup -Filter * 
+       #// Set progress bar variables 
+       $i=0 
+       $tot = $ADGroups.count 
  
-        #// Set progress bar variables 
-        $i=0 
-        $tot = $ADGroups.count 
+       foreach ($ADGroup in $ADGroups) { 
+       #// Set up progress bar 
+       $i++ 
+       $status = "{0:N0}" -f ($i / $tot * 100) 
+       Write-Progress -Activity "Exporting AD Groups" -status "Processing Group $i of $tot : $status% Completed" -PercentComplete ($i / $tot * 100) 
  
-        foreach ($ADGroup in $ADGroups) { 
-        #// Set up progress bar 
-        $i++ 
-        $status = "{0:N0}" -f ($i / $tot * 100) 
-        Write-Progress -Activity "Exporting AD Groups" -status "Processing Group $i of $tot : $status% Completed" -PercentComplete ($i / $tot * 100) 
+       #// Ensure Members variable is empty 
+       $Members = "" 
  
-        #// Ensure Members variable is empty 
-        $Members = "" 
- 
-        #// Get group members which are also groups and add to string 
-        $MembersArr = Get-ADGroup -filter {Name -eq $ADGroup.Name} | Get-ADGroupMember |  select Name 
+       #// Get group members which are also groups and add to string 
+       $MembersArr = Get-ADGroup -filter {Name -eq $ADGroup.Name} | Get-ADGroupMember |  select Name 
         if ($MembersArr) { 
             foreach ($Member in $MembersArr) { 
                 $Members = $Members + "," + $Member.Name 
@@ -152,29 +172,36 @@ Write-Host "================ Menu ================"
         $CSVOutput | Sort-Object Name | Export-Csv $CSVFile -NoTypeInformation 
  
         #// End of script
-		Write-Host "Success !!!" -ForegroundColor green
-        Write-Host "The list was exported on C:\AD_Groups"+$DateTime+".csv"
-		Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+		    Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "The list was exported on C:\ADtool\AD_groups_members\All_AD_groups_and_members"+$DateTime+".csv"
+            Write-Host "`n$line"
+		Read-Host -Prompt “Press Enter to return to main menu”}
 
       6{$Name = Read-Host -Prompt 'Enter the name *'
         $SurName = Read-Host -Prompt 'Enter the Surname *'
         $SamAccountName = Read-Host -Prompt 'Enter the accountname *'
-        $UserPrincipalName = Read-Host -Prompt 'Enter the full accountname with @domain *'
+        $Domain = (Get-ADDomain).DNSRoot
+        $UserPrincipalName = "$SamAccountName@$Domain"
 		$EMail = Read-Host -Prompt 'Enter the Email *'
         
         New-ADUser -Name $Name -GivenName $GivenName -Surname $Name -SamAccountName $SamAccountName -UserPrincipalName $UserPrincipalName -EMail $EMail -Path "OU=cioky_users,DC=cioky,DC=corp" -AccountPassword(Read-Host -AsSecureString "Input Password") -Enabled $true
         
-        <#Set variable to send email#>
+        <#Set variable to send email
         $From = "cioky88.cioky.corp"
         $To  = "ciocotisan.bogdan@gmail.com"
         $Subject = "cioky88 AD tool Script"
-        $SMTPYahoo = "smtp.mail.yahoo.com"
+        $SMTPYahoo = "smtp.mail.yahoo.com"#>
 
         <#Send-MailMessage -From $From -To $To -Subject $Subject#>
-	    Send-MailMessage -To $To -From $From -Subject $Subject -Body “Some important plain text!” -Credential (Get-Credential) -SmtpServer $SMTPYahoo -Port 587
-
-        Write-Host "Success !!!" -ForegroundColor green
-        Read-Host -Prompt “Press Enter to exit”}
+	    <#Send-MailMessage -To $To -From $From -Subject $Subject -Body “Some important plain text!” -Credential (Get-Credential) -SmtpServer $SMTPYahoo -Port 587
+#>          Write-Host "`n$line"
+            Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "The user "–NoNewline
+            Write-Host "$SamAccountName " –NoNewline -ForegroundColor red
+            Write-Host "was created !"
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
 
       7{dsquery user -inactive 30;
 	    Write-Host "Success !!!" -ForegroundColor green
@@ -329,12 +356,29 @@ Write-Host "================ Menu ================"
         <#Test-ADAuthentication "test" "Password1"#>
         Read-Host -Prompt “Press Enter to exit”}
 
-        18{$CNUsr = Read-Host -Prompt 'Enter the username'
-        <#Get-ADUser -Identity $CNUsr -Properties *#>
+        18{$CNUsr = Read-Host -Prompt 'Enter the username: '
+        Write-Host "`n$line"
+        #get-aduser -filter * -properties * | ?{$_.Enabled -eq $True} | Select SamAccountName,UserPrincipalName,givenName,surName,Title,Department,CanonicalName,employeeID | Export-Csv c:\whateverdirectory\userlist.csv
 
-        <#Rename-ADObject -Identity "OU=ManagedGroups,OU=Managed,DC=Fabrikam,DC=Com" -NewName "Groups"#>
-        
-        <#Read-Host -Prompt “Press Enter to exit”}#>}
+          $UserCN = get-aduser -filter {SamAccountName -like $CNUsr} -properties * | ?{$_.Enabled -eq $True} | Select CanonicalName
+          #$UsrGUID = get-aduser -filter {SamAccountName -like $CNUsr} -properties * | ?{$_.Enabled -eq $True} | Select ObjectGUID
+          $UsrGUID = (get-aduser -identity $CNUsr).ObjectGUID 
+          $UsrCannNamd = (get-aduser -identity $CNUsr).CanonicalName
+          
+          Write-Host "The CanonicalName of the user is "
+          Write-Host $UserCN
+          Write-Host "`n$line"
+          $RenameObj = Read-Host -Prompt 'Enter the New Canonical Name of the user Object'
+          Write-Host "`n$line"
+          Rename-ADObject -Identity $UsrGUID -NewName $RenameObj
+
+          Write-Host "The New CanonicalName of the user Object is: "
+          $UserCNNew = get-aduser -filter {SamAccountName -like $CNUsr} -properties * | ?{$_.Enabled -eq $True} | Select CanonicalName
+          Write-Host $UserCNNew
+            Write-Host "`n$line"
+            Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”}
 
         19{$CNUsrProp = Read-Host -Prompt 'Enter the username'
         Get-ADUser -Identity $CNUsrProp -Properties *
@@ -455,9 +499,38 @@ Write-Host "================ Menu ================"
         Write-Host "Success !!!" -ForegroundColor green
         Read-Host -Prompt “Press Enter to exit”}
 
+        37{$SGroup = Read-Host -Prompt “Enter the name of the source Group”
+            $DGroup = Read-Host -Prompt “Enter the name of the destination Group”
+            Get-ADGroupMember -Identity $SGroup | ForEach-Object {Add-ADGroupMember -Identity $DGroup -Members $_.distinguishedName}
+
+        Write-Host "Success !!!" -ForegroundColor green
+        Read-Host -Prompt “Press Enter to exit”}
+
+        38{$DC1 = Read-Host -Prompt “Enter the domain extension, com,corp, etc”
+            $DC2 = Read-Host -Prompt “Enter the domain name”
+            $OU = Read-Host -Prompt “Enter the name of the OU"
+            Get-Aduser -Filter * -Searchbase "ou=$OU,dc=$DC2,dc=$DC1" | Select SamAccountName
+
+        Write-Host "Success !!!" -ForegroundColor green
+        Read-Host -Prompt “Press Enter to exit”}
+
+        39{$OldOU = Read-Host -Prompt “Enter the name of the current OU”
+        $NewOU = Read-Host -Prompt “Enter the name of the new OU”
+
+        Rename-ADObject -Identity "OU=$OldOU,DC=cioky,DC=corp" -NewName $NewOU
+        Write-Host "`n$line"
+        Write-Host "All users from $OldOU was moved in $NewOU"
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”}
+        
+        
+
         default {
 		Write-Host "Error !!!" -ForegroundColor red
-		Write-Host "Select a valid option !!!" -ForegroundColor red} 
+		Write-Host "Select a valid option !!!" -ForegroundColor red
+        Write-Host "`n$line"}
     }
   }
 } while ( $userMenuChoice -ne 99 )
