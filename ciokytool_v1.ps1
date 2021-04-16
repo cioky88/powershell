@@ -35,9 +35,9 @@ Write-Host "================ Menu ================"
     Write-Host "1. IP network configuration"
     Write-Host "2. Server' hostname"
     Write-Host "3. Display the Domain Name"
-    Write-Host "4. Last AD communication with old computers"
+    Write-Host "4. Computers with old AD communication"
     Write-Host "5. Export all AD groups and thier members"
-    Write-Host "6. Create AD user"
+    Write-Host "6. Create AD user in a specific OU"
     Write-Host "7. List inactive users from 30 days"
     Write-Host "8. List inactive computers from 30 days"
     Write-Host "9. List users from a specific AD Group"
@@ -50,7 +50,7 @@ Write-Host "================ Menu ================"
     Write-Host "16. Reset AD user password"
     Write-Host "17. Test AD user password"
     Write-Host "18. Rename AD User CN Object, (CN=Canonical Name)"
-    Write-Host "19. List all AD User proprietes"
+    Write-Host "19. List all proprietes of a AD User "
     Write-Host "20. Check FSMO Roles"
     Write-Host "21. AD Replication status /showrepl"
     Write-Host "22. AD Replication status /replsummary"
@@ -71,11 +71,14 @@ Write-Host "================ Menu ================"
     Write-Host "37. Copy All users from an group to another"
     Write-Host "38. Lista all users from an OU"
     Write-Host "39. Move all users from an OU to another"
+    Write-Host "40. Check for  stations with Broken Trust Relationship"
+    Write-Host "41. Create AD user in default Users OU"
      
     Write-Host "Q. Quit and Exit"
     Write-Host "`n$line"
 
     [int]$userMenuChoice = Read-Host "Please choose an option"
+    Write-Host "`n$line"
 
     switch ($userMenuChoice) {
 
@@ -178,14 +181,25 @@ Write-Host "================ Menu ================"
             Write-Host "`n$line"
 		Read-Host -Prompt “Press Enter to return to main menu”}
 
-      6{$Name = Read-Host -Prompt 'Enter the name *'
+      6{Write-Host "This method required the path of the OU"
+        Write-Host "OU structure example: OU=Cluj,OU=Romania,OU=cioky_users"-ForegroundColor green
+        Write-Host "- cioky_users" -ForegroundColor red
+        Write-Host " - Romania" -ForegroundColor red
+        Write-Host "  - Cluj" -ForegroundColor red
+        Write-Host "`n$line"
+
+        $UserOU = Read-Host -Prompt 'Enter the OU path *'
+        $Name = Read-Host -Prompt 'Enter the name *'
         $SurName = Read-Host -Prompt 'Enter the Surname *'
         $SamAccountName = Read-Host -Prompt 'Enter the accountname *'
         $Domain = (Get-ADDomain).DNSRoot
         $UserPrincipalName = "$SamAccountName@$Domain"
 		$EMail = Read-Host -Prompt 'Enter the Email *'
+        $string = (Get-ADDomain).UsersContainer
+        #$string = "CN=Users,DC=cioky,DC=corp"
+        $a, $b, $c = $string.split(",")
         
-        New-ADUser -Name $Name -GivenName $GivenName -Surname $Name -SamAccountName $SamAccountName -UserPrincipalName $UserPrincipalName -EMail $EMail -Path "OU=cioky_users,DC=cioky,DC=corp" -AccountPassword(Read-Host -AsSecureString "Input Password") -Enabled $true
+        New-ADUser -Name $Name -GivenName $GivenName -Surname $Name -SamAccountName $SamAccountName -UserPrincipalName $UserPrincipalName -EMail $EMail -Path "$UserOU,$b,$c" -AccountPassword(Read-Host -AsSecureString "Input Password") -Enabled $true
         
         <#Set variable to send email
         $From = "cioky88.cioky.corp"
@@ -195,43 +209,55 @@ Write-Host "================ Menu ================"
 
         <#Send-MailMessage -From $From -To $To -Subject $Subject#>
 	    <#Send-MailMessage -To $To -From $From -Subject $Subject -Body “Some important plain text!” -Credential (Get-Credential) -SmtpServer $SMTPYahoo -Port 587
-#>          Write-Host "`n$line"
+#>          
+            
+            Write-Host "`n$line"
             Write-Host "Success !!!" -ForegroundColor green
             Write-Host "The user "–NoNewline
             Write-Host "$SamAccountName " –NoNewline -ForegroundColor red
-            Write-Host "was created !"
+            Write-Host "was created on $UserOU!"
             Write-Host "`n$line"
         Read-Host -Prompt “Press Enter to return to main menu”}
 
       7{dsquery user -inactive 30;
-	    Write-Host "Success !!!" -ForegroundColor green
-        Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+	        Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
 
       8{dsquery computer -inactive 30;
-	    Write-Host "Success !!!" -ForegroundColor green
-        Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+	        Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
       
       9{$GroupName = Read-Host -Prompt 'Enter the Group name'
         Get-ADGroupMember -Identity $GroupName -Recursive | Select name
-	    Write-Host "Success !!!" -ForegroundColor green
-        Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+	        Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
         
       10{$DateTime = Get-Date -f "yyyy-MM"
         $GroupNameExp = Read-Host -Prompt 'Enter the Group name'
         <#Get-ADGroupMember $GroupNameExp | Select Name, SamAccountName, EMail | Export-CSV C:\AD_"$GroupNameExp"_Group_Members_"$DateTime".csv#>
         Get-adgroupmember $GroupNameExp | % {get-aduser $_ -properties emailaddress} | Select Name, SamAccountName, EMailaddress | Export-CSV C:\AD_"$GroupNameExp"_Group_Members_"$DateTime".csv
 
-        Write-Host "The list was exported on C:\AD_"$GroupNameExp"_Group_Members_"$DateTime".csv"
-        Write-Host "Success !!!" -ForegroundColor green
-        Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "The list was exported on C:\AD_"$GroupNameExp"_Group_Members_"$DateTime".csv"
+            Write-Host "`n$line"
+            Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
 
        11{$GroupNameS = Read-Host -Prompt 'Enter the Group name'
          $UsernameS = Read-Host -Prompt 'Enter the user name'
         
-	    Write-Host "User "$UsernameS" has been added to "$GroupNameS" group "
+	        Write-Host "User "$UsernameS" has been added to "$GroupNameS" group "
         Add-ADGroupMember -Identity $GroupNameS -Members $UsernameS
-        Write-Host "Success !!!" -ForegroundColor green
-        Read-Host -Prompt “Press Enter to exit”}
+            Write-Host "`n$line"
+            Write-Host "Success !!!" -ForegroundColor green
+            Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to return to main menu”}
 
         12{Add-Content -Path C:\Create_AD_Bulk_Users.csv  -Value '"firstname";"middleInitial";"lastname";"username";"email";"streetaddress";"city";"zipcode";"state";"country";"department";"password";"telephone";"jobtitle";"company";"ou"'
         Write-Host "The template was created on C:\Create_AD_Bulk_Users.csv " -ForegroundColor green
@@ -514,12 +540,23 @@ Write-Host "================ Menu ================"
         Write-Host "Success !!!" -ForegroundColor green
         Read-Host -Prompt “Press Enter to exit”}
 
-        39{$OldOU = Read-Host -Prompt “Enter the name of the current OU”
+        39{$string = (Get-ADDomain).UsersContainer
+        #$string = "CN=Users,DC=cioky,DC=corp"
+        $a, $b, $c = $string.split(",")
+        $OldOU = Read-Host -Prompt “Enter the name of the current OU”
         $NewOU = Read-Host -Prompt “Enter the name of the new OU”
 
-        Rename-ADObject -Identity "OU=$OldOU,DC=cioky,DC=corp" -NewName $NewOU
+        Rename-ADObject -Identity "OU=$OldOU,$b,$c" -NewName $NewOU
         Write-Host "`n$line"
         Write-Host "All users from $OldOU was moved in $NewOU"
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”}
+
+        40{
+
+
         Write-Host "`n$line"
         Write-Host "Success !!!" -ForegroundColor green
         Write-Host "`n$line"
