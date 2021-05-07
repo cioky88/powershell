@@ -74,6 +74,9 @@ Write-Host "================ Menu ================"
     Write-Host "40. Check for  stations with Broken Trust Relationship"
     Write-Host "41. Create AD user in default Users OU"
     Write-Host "42. Export users from many groups to one *.CSV"
+    Write-Host "43. Check user password expiration time"
+    Write-Host "44. Check password  status of all AD users"
+    Write-Host "45. Return user password day until expired"
      
     Write-Host "Q. Quit and Exit"
     Write-Host "`n$line"
@@ -633,8 +636,43 @@ if (Test-Path $FileName)
         Write-Host "Success !!!" -ForegroundColor green
         Write-Host "`n$line"
         Read-Host -Prompt “Press Enter to exit”}
+
+        43{
+        $ADuserPasswd = Read-Host -Prompt “Enter the name of the User ”
+        Write-Host "`n$line"
+        net user $ADuserPasswd /domain  | find "Password expires"
+
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”
+        }
         
-        
+        44{
+        get-aduser -filter * -properties passwordlastset, passwordneverexpires |ft Name, passwordlastset, Passwordneverexpires
+        Write-Host "`n$line"
+
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”
+        }
+
+        45{
+        Import-Module ActiveDirectory
+        $MaxPwdAge = (Get-ADDefaultDomainPasswordPolicy).MaxPasswordAge.Days
+        $expiredDate = (Get-Date).addDays(-$MaxPwdAge)
+        #Set the number of days until you would like to begin notifing the users. -- Do Not Modify --
+        #Filters for all users who's password is within $date of expiration.
+        $ExpiredUsers = Get-ADUser -Filter {(PasswordLastSet -gt $expiredDate) -and (PasswordNeverExpires -eq $false) -and (Enabled -eq $true)} -Properties PasswordNeverExpires, PasswordLastSet, Mail | select samaccountname, PasswordLastSet, @{name = "DaysUntilExpired"; Expression = {$_.PasswordLastSet - $ExpiredDate | select -ExpandProperty Days}} | Sort-Object PasswordLastSet
+        $ExpiredUsers
+        Write-Host "`n$line"
+
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”
+        }
 
         default {
 		Write-Host "Error !!!" -ForegroundColor red
