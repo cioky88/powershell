@@ -73,6 +73,7 @@ Write-Host "================ Menu ================"
     Write-Host "39. Move all users from an OU to another"
     Write-Host "40. Check for  stations with Broken Trust Relationship"
     Write-Host "41. Create AD user in default Users OU"
+    Write-Host "42. Export users from many groups to one *.CSV"
      
     Write-Host "Q. Quit and Exit"
     Write-Host "`n$line"
@@ -557,6 +558,77 @@ Write-Host "================ Menu ================"
         40{
 
 
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”}
+
+        41{
+
+
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”}
+
+        42{
+        
+<#$groupNames = 'HR','Engineering','Finance'
+$users_list = @()
+
+foreach ($group in $groupNames) 
+    {
+   
+     $user = Get-ADGroupmember -identity $group | select name 
+     $users_list += $user
+
+    }
+
+$users_list | sort name -Unique | Export-Csv 'c:\MultiGuroups.csv' -NoClobber -NoTypeInformation
+
+#Write-Host $users_list
+<#$FileName2 = "c:\MultiGuroups_Sorted.csv"
+if (Test-Path $FileName2) 
+{
+  Remove-Item $FileName2
+}
+
+Import-Csv c:\MultiGuroups.csv | sort name -Unique | Export-Csv 'c:\MultiGuroups_Sorted.csv' -NoClobber -NoTypeInformation -Append
+
+$FileName = "c:\MultiGuroups.csv"
+if (Test-Path $FileName) 
+{
+  Remove-Item $FileName
+} #>
+
+        $FileName = "c:\MultiGuroups.csv"
+        if (Test-Path $FileName) 
+            {
+                Remove-Item $FileName
+            }
+
+        $groupNames = Read-Host -Prompt “Enter the group name separated by coma ex: HR, IT ”
+
+        foreach ($group in $groupNames) 
+            {
+   
+                Get-ADGroupmember -identity $group | select name  | Export-Csv -path c:\MultiGuroups.csv -Append
+    
+            }
+
+        $FileName2 = "c:\MultiGuroups_Sorted.csv"
+        if (Test-Path $FileName2) 
+            {
+                Remove-Item $FileName2
+            }
+
+        Import-Csv c:\MultiGuroups.csv | sort name -Unique | Export-Csv 'c:\MultiGuroups_Sorted.csv' -NoClobber -NoTypeInformation -Append
+
+        $FileName = "c:\MultiGuroups.csv"
+        if (Test-Path $FileName) 
+            {
+                Remove-Item $FileName
+            }
         Write-Host "`n$line"
         Write-Host "Success !!!" -ForegroundColor green
         Write-Host "`n$line"
