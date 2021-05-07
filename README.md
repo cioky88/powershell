@@ -46,5 +46,8 @@ Author: https://www.linkedin.com/in/bogdan-ciocotisan-90b45367/
 37. Copy All users from an group to another
 38. Lista all users from an OU
 39. Move all users from an OU to another
+40. Write-Host "40. Check for  stations with Broken Trust Relationship"
+41. Write-Host "41. Create AD user in default Users OU"
+42. Write-Host "42. Export users from many groups to one *.CSV"
 
 Q. Quit and Exit
