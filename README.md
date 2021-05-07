@@ -49,5 +49,8 @@ Author: https://www.linkedin.com/in/bogdan-ciocotisan-90b45367/
 40. Write-Host "40. Check for  stations with Broken Trust Relationship"
 41. Write-Host "41. Create AD user in default Users OU"
 42. Write-Host "42. Export users from many groups to one *.CSV"
+43. Write-Host "43. Check user password expiration time"
+44. Write-Host "44. Check password  status of all AD users"
+45. Write-Host "45. Return user password day until expired"
 
 Q. Quit and Exit
