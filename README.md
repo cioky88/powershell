@@ -51,6 +51,6 @@ Author: https://www.linkedin.com/in/bogdan-ciocotisan-90b45367/
 42. Write-Host "42. Export users from many groups to one *.CSV"
 43. Write-Host "43. Check user password expiration time"
 44. Write-Host "44. Check password  status of all AD users"
-45. Write-Host "45. Return user password day until expired"
+45. Write-Host "45. List with days until password expire"
 
 Q. Quit and Exit
