@@ -46,11 +46,12 @@ Author: https://www.linkedin.com/in/bogdan-ciocotisan-90b45367/
 37. Copy All users from an group to another
 38. Lista all users from an OU
 39. Move all users from an OU to another
-40. Write-Host "40. Check for  stations with Broken Trust Relationship"
-41. Write-Host "41. Create AD user in default Users OU"
-42. Write-Host "42. Export users from many groups to one *.CSV"
-43. Write-Host "43. Check user password expiration time"
-44. Write-Host "44. Check password  status of all AD users"
-45. Write-Host "45. List with days until password expire"
+40. Check for  stations with Broken Trust Relationship
+41. Create AD user in default Users OU
+42. Export users from many groups to one *.CSV
+43. Check user password expiration time
+44. Check password  status of all AD users
+45. List with days until password expire
+46. Copy users from many groups to one
 
 Q. Quit and Exit
