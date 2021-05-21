@@ -76,7 +76,8 @@ Write-Host "================ Menu ================"
     Write-Host "42. Export users from many groups to one *.CSV"
     Write-Host "43. Check user password expiration time"
     Write-Host "44. Check password  status of all AD users"
-    Write-Host "45. Return user password day until expired"
+    Write-Host "45. List with days until password expire"
+    Write-Host "46. Copy users from many groups to one"
      
     Write-Host "Q. Quit and Exit"
     Write-Host "`n$line"
@@ -368,7 +369,7 @@ Write-Host "================ Menu ================"
         Read-Host -Prompt “Press Enter to exit”}
 
         16{$ResetPasswd = Read-Host -Prompt 'Enter the name of the user'
-           $NewPasswd = Read-Host -Prompt 'Enter the password for the user'
+           $NewPasswd = Read-Host -Prompt 'Enter the password for the user' 
 
         Set-ADAccountPassword -Identity $ResetPasswd -Reset -NewPassword (ConvertTo-SecureString -AsPlainText $NewPasswd -Force)
 
@@ -377,7 +378,7 @@ Write-Host "================ Menu ================"
         Read-Host -Prompt “Press Enter to exit”}
 
         17{$TestUsr = Read-Host -Prompt 'Enter the username'
-           $TestPasswd = Read-Host -Prompt 'Enter the password'
+           $TestPasswd = Read-Host -Prompt 'Enter the password' 
 
         Function Test-ADAuthentication {
         param($username,$password)
@@ -666,6 +667,41 @@ if (Test-Path $FileName)
         #Filters for all users who's password is within $date of expiration.
         $ExpiredUsers = Get-ADUser -Filter {(PasswordLastSet -gt $expiredDate) -and (PasswordNeverExpires -eq $false) -and (Enabled -eq $true)} -Properties PasswordNeverExpires, PasswordLastSet, Mail | select samaccountname, PasswordLastSet, @{name = "DaysUntilExpired"; Expression = {$_.PasswordLastSet - $ExpiredDate | select -ExpandProperty Days}} | Sort-Object PasswordLastSet
         $ExpiredUsers
+        Write-Host "`n$line"
+
+        Write-Host "`n$line"
+        Write-Host "Success !!!" -ForegroundColor green
+        Write-Host "`n$line"
+        Read-Host -Prompt “Press Enter to exit”
+        }
+        46{
+
+        Import-Module ActiveDirectory
+
+        $groupNames = 'HR','Engineering','Finance'
+        $users_list = @()
+        $DestGroup = "isms_managers_access" 
+
+
+        foreach ($group in $groupNames) 
+        {
+
+        $user = Get-ADGroupmember -identity $group | select name 
+        $users_list += $user
+
+        }
+        #$users_list | sort name -Unique | Export-Csv 'c:\MultiGuroups.csv' -NoClobber -NoTypeInformation 
+
+        foreach ($manager in $users_list) {
+        $UPN = $manager.name
+        Get-ADUser -Filter "name -eq '$UPN'" |
+
+        # Add user to group
+        ForEach-Object { Add-ADGroupMember -Identity "$DestGroup" -Members "$_" } 
+        } 
+
+
+
         Write-Host "`n$line"
 
         Write-Host "`n$line"
